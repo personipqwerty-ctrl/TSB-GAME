@@ -1,0 +1,384 @@
+-- LOAD ONLY ONCE
+if getgenv().EZVoidTeleporterLoaded then
+	game.StarterGui:SetCore("SendNotification", {
+		Title = "EZ VOID TELEPORTER",
+		Text = "Sir, This script is loaded :/",
+		Duration = 4
+	})
+
+	return
+end
+
+getgenv().EZVoidTeleporterLoaded = true
+
+-- GAME CHECK
+local supportedPlaceId = 10449761463
+
+if game.PlaceId ~= supportedPlaceId then
+	game.StarterGui:SetCore("SendNotification", {
+		Title = "NOT SUPPORTED",
+		Text = "Hello, This Game is Not Supported",
+		Duration = 6
+	})
+
+	return
+end
+
+-- Services
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Configuration
+local teleportPosition = Vector3.new(240.31468200683594, -491.9150390625, -183.96755981445312)
+
+-- EXTREME HUGE PLATFORM
+local platformSize = Vector3.new(1000, 1, 1000)
+
+-- Variables
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local camera = workspace.CurrentCamera
+
+local savedPosition = nil
+local toggled = false
+local platform = nil
+
+-- Rainbow colors
+local rainbowColors = {
+	Color3.fromRGB(255, 0, 0),
+	Color3.fromRGB(255, 127, 0),
+	Color3.fromRGB(255, 255, 0),
+	Color3.fromRGB(0, 255, 0),
+	Color3.fromRGB(0, 255, 255),
+	Color3.fromRGB(0, 0, 255),
+	Color3.fromRGB(139, 0, 255)
+}
+
+-- Gray/Black colors
+local backgroundColors = {
+	Color3.fromRGB(0, 0, 0),
+	Color3.fromRGB(35, 35, 35),
+	Color3.fromRGB(60, 60, 60),
+	Color3.fromRGB(25, 25, 25)
+}
+
+-- Character update
+player.CharacterAdded:Connect(function(newCharacter)
+	character = newCharacter
+	wait(1)
+
+	camera.CameraSubject = character:WaitForChild("Humanoid")
+	camera.CameraType = Enum.CameraType.Custom
+end)
+
+-- Rainbow tween for platform
+local function rainbowTweenPart(part)
+	task.spawn(function()
+		while part and part.Parent do
+			for _, color in ipairs(rainbowColors) do
+				local tween = TweenService:Create(
+					part,
+					TweenInfo.new(0.4, Enum.EasingStyle.Linear),
+					{Color = color}
+				)
+
+				tween:Play()
+				tween.Completed:Wait()
+			end
+		end
+	end)
+end
+
+-- Rainbow tween for button text
+local function rainbowTweenText(button)
+	task.spawn(function()
+		while button and button.Parent do
+			for _, color in ipairs(rainbowColors) do
+				local tween = TweenService:Create(
+					button,
+					TweenInfo.new(0.4, Enum.EasingStyle.Linear),
+					{TextColor3 = color}
+				)
+
+				tween:Play()
+				tween.Completed:Wait()
+			end
+		end
+	end)
+end
+
+-- Rainbow tween for label text
+local function rainbowTweenLabel(label)
+	task.spawn(function()
+		while label and label.Parent do
+			for _, color in ipairs(rainbowColors) do
+				local tween = TweenService:Create(
+					label,
+					TweenInfo.new(0.4, Enum.EasingStyle.Linear),
+					{TextColor3 = color}
+				)
+
+				tween:Play()
+				tween.Completed:Wait()
+			end
+		end
+	end)
+end
+
+-- Gray/Black background tween
+local function backgroundTween(object)
+	task.spawn(function()
+		while object and object.Parent do
+			for _, color in ipairs(backgroundColors) do
+				local tween = TweenService:Create(
+					object,
+					TweenInfo.new(0.8, Enum.EasingStyle.Sine),
+					{BackgroundColor3 = color}
+				)
+
+				tween:Play()
+				tween.Completed:Wait()
+			end
+		end
+	end)
+end
+
+-- Create platform
+local function createPlatform(position)
+	local newPlatform = Instance.new("Part")
+	newPlatform.Name = "ExtremeVoidPlatform"
+	newPlatform.Size = platformSize
+	newPlatform.Position = position
+	newPlatform.Anchored = true
+
+	-- Transparent platform
+	newPlatform.Material = Enum.Material.SmoothPlastic
+	newPlatform.Transparency = 0.75
+
+	newPlatform.Color = Color3.fromRGB(255, 0, 0)
+	newPlatform.Parent = workspace
+
+	rainbowTweenPart(newPlatform)
+
+	return newPlatform
+end
+
+-- Reset camera
+local function resetCamera()
+	if character and character:FindFirstChild("Humanoid") then
+		camera.CameraSubject = character.Humanoid
+		camera.CameraType = Enum.CameraType.Custom
+	end
+end
+
+-- Teleport once
+local function teleportPlayer()
+	if character and character:FindFirstChild("HumanoidRootPart") then
+		character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
+	end
+end
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "EZVoidGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- MAIN FRAME
+local frame = Instance.new("Frame")
+frame.Parent = screenGui
+frame.Size = UDim2.new(0, 420, 0, 220)
+frame.Position = UDim2.new(0.5, -210, 0.5, -110)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BorderSizePixel = 0
+
+-- FRAME SLIDE ANIMATION
+task.spawn(function()
+	while frame.Parent and frame.Visible do
+		local tween1 = TweenService:Create(
+			frame,
+			TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+			{Position = UDim2.new(0.5, -180, 0.5, -110)}
+		)
+
+		tween1:Play()
+		tween1.Completed:Wait()
+
+		local tween2 = TweenService:Create(
+			frame,
+			TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+			{Position = UDim2.new(0.5, -240, 0.5, -110)}
+		)
+
+		tween2:Play()
+		tween2.Completed:Wait()
+	end
+end)
+
+-- TEXT LABEL
+local label = Instance.new("TextLabel")
+label.Parent = frame
+label.Size = UDim2.new(1, -20, 0, 120)
+label.Position = UDim2.new(0, 10, 0, 10)
+label.BackgroundTransparency = 1
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextWrapped = true
+label.TextScaled = true
+label.Font = Enum.Font.GothamBold
+label.Text = "Thanks for executing, We appreciate you for Using this BUT I hope you will have a great life for playing!! :3"
+
+rainbowTweenLabel(label)
+
+-- EXECUTE BUTTON
+local executeButton = Instance.new("TextButton")
+executeButton.Parent = frame
+executeButton.Size = UDim2.new(0.7, 0, 0, 45)
+executeButton.Position = UDim2.new(0.15, 0, 1, -60)
+
+-- Gray background
+executeButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+
+executeButton.Text = "Execute!"
+executeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+executeButton.TextScaled = true
+executeButton.Font = Enum.Font.GothamBold
+executeButton.BorderSizePixel = 0
+
+local executeCorner = Instance.new("UICorner")
+executeCorner.CornerRadius = UDim.new(0, 12)
+executeCorner.Parent = executeButton
+
+backgroundTween(executeButton)
+
+-- VOID BUTTON
+local button = Instance.new("TextButton")
+button.Parent = screenGui
+button.Visible = false
+button.Size = UDim2.new(0, 220, 0, 55)
+button.Position = UDim2.new(0.5, -110, 0, 0)
+button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+button.TextColor3 = Color3.fromRGB(255, 0, 0)
+
+button.FontFace = Font.new(
+	"rbxasset://fonts/families/Montserrat.json",
+	Enum.FontWeight.Bold,
+	Enum.FontStyle.Normal
+)
+
+button.TextSize = 22
+button.Text = "Void: OFF"
+button.AutoButtonColor = false
+button.BorderSizePixel = 0
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 11)
+corner.Parent = button
+
+-- Draggable button
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+button.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+
+		dragging = true
+		dragStart = input.Position
+		startPos = button.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+button.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement
+	or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+
+		button.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+rainbowTweenText(button)
+backgroundTween(button)
+
+-- Notification
+game.StarterGui:SetCore("SendNotification", {
+	Title = "EZ VOID TELEPORTER",
+	Text = "MADE BY SHORTGAMETESLA",
+	Duration = 5
+})
+
+-- Execute button
+executeButton.MouseButton1Click:Connect(function()
+
+	-- Slide frame to top
+	local tween = TweenService:Create(
+		frame,
+		TweenInfo.new(0.8, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+		{
+			Position = UDim2.new(0.5, -210, -1, 0)
+		}
+	)
+
+	tween:Play()
+
+	tween.Completed:Wait()
+
+	frame.Visible = false
+	button.Visible = true
+end)
+
+-- Toggle void button
+button.MouseButton1Click:Connect(function()
+
+	if not character or not character:FindFirstChild("HumanoidRootPart") then
+		return
+	end
+
+	if not toggled then
+		savedPosition = character.HumanoidRootPart.CFrame
+	end
+
+	toggled = not toggled
+
+	if toggled then
+
+		platform = createPlatform(teleportPosition + Vector3.new(0, -3, 0))
+
+		teleportPlayer()
+
+		button.Text = "Void: ON"
+
+	else
+		if platform then
+			platform:Destroy()
+			platform = nil
+		end
+
+		if savedPosition and character and character:FindFirstChild("HumanoidRootPart") then
+			character.HumanoidRootPart.CFrame = savedPosition
+		end
+
+		button.Text = "Void: OFF"
+
+		resetCamera()
+	end
+end)
