@@ -25,6 +25,7 @@ end
 -- Services
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 -- Configuration
 local teleportPosition = Vector3.new(240.31468200683594, -491.9150390625, -183.96755981445312)
@@ -65,12 +66,14 @@ player.CharacterAdded:Connect(function(newCharacter)
 	camera.CameraType = Enum.CameraType.Custom
 end)
 
--- Rainbow
+-- Rainbow text
 local function rainbowTweenText(obj)
 	task.spawn(function()
 		while obj and obj.Parent do
 			for _, color in ipairs(rainbowColors) do
-				local tween = TweenService:Create(obj, TweenInfo.new(0.4), {TextColor3 = color})
+				local tween = TweenService:Create(obj, TweenInfo.new(0.4), {
+					TextColor3 = color
+				})
 				tween:Play()
 				tween.Completed:Wait()
 			end
@@ -82,7 +85,9 @@ local function backgroundTween(obj)
 	task.spawn(function()
 		while obj and obj.Parent do
 			for _, color in ipairs(backgroundColors) do
-				local tween = TweenService:Create(obj, TweenInfo.new(0.8), {BackgroundColor3 = color})
+				local tween = TweenService:Create(obj, TweenInfo.new(0.8), {
+					BackgroundColor3 = color
+				})
 				tween:Play()
 				tween.Completed:Wait()
 			end
@@ -143,7 +148,8 @@ label.Position = UDim2.new(0, 10, 0, 10)
 label.BackgroundTransparency = 1
 label.Text = "Thanks for Executing, We appreciate you for Using This BUT I hope you have a good day for Playing!!! :3"
 label.TextWrapped = true
-label.TextScaled = true
+label.TextScaled = false
+label.TextSize = 18
 label.Font = Enum.Font.GothamBold
 label.TextColor3 = Color3.fromRGB(255, 255, 255)
 label.TextXAlignment = Enum.TextXAlignment.Center
@@ -187,14 +193,47 @@ local c = Instance.new("UICorner")
 c.CornerRadius = UDim.new(0, 11)
 c.Parent = button
 
--- ✔ UI STROKE ADDED
+-- UIStroke border
 local stroke = Instance.new("UIStroke")
 stroke.Parent = button
 stroke.Color = Color3.fromRGB(255, 255, 255)
 stroke.Thickness = 3
-stroke.Transparency = 0
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke.LineJoinMode = Enum.LineJoinMode.Round
 
 rainbowTweenText(button)
+
+-- DRAG SYSTEM (fixed smooth)
+local dragging = false
+local dragStart
+local startPos
+
+button.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = button.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+
+		button.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
 
 -- VERSION LABEL
 local versionLabel = Instance.new("TextLabel")
@@ -216,19 +255,39 @@ game.StarterGui:SetCore("SendNotification", {
 	Duration = 5
 })
 
--- EXECUTE
+-- EXECUTE (WOBBLE SLIDE EXIT)
 executeButton.MouseButton1Click:Connect(function()
-	TweenService:Create(frame, TweenInfo.new(0.8), {
-		Position = UDim2.new(0.5, -230, -1, 0)
-	}):Play()
 
-	wait(0.8)
+	local startPos = frame.Position
+	local time = 0
+	local duration = 1.6
 
-	frame.Visible = false
-	button.Visible = true
+	local connection
+	connection = RunService.RenderStepped:Connect(function(dt)
+		time += dt
+		local alpha = math.clamp(time / duration, 0, 1)
+
+		local endY = -1
+		local y = startPos.Y.Offset + ((endY * 300) - startPos.Y.Offset) * alpha
+
+		local wobble = math.sin(time * 6) * 20
+
+		frame.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + wobble,
+			startPos.Y.Scale,
+			y
+		)
+
+		if alpha >= 1 then
+			connection:Disconnect()
+			frame.Visible = false
+			button.Visible = true
+		end
+	end)
 end)
 
--- TOGGLE VOID (squish animation)
+-- VOID TOGGLE
 button.MouseButton1Click:Connect(function()
 	local originalSize = button.Size
 
