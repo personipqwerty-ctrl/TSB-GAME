@@ -57,15 +57,7 @@ local backgroundColors = {
 	Color3.fromRGB(25, 25, 25)
 }
 
--- Character update
-player.CharacterAdded:Connect(function(newCharacter)
-	character = newCharacter
-	wait(1)
-	camera.CameraSubject = character:WaitForChild("Humanoid")
-	camera.CameraType = Enum.CameraType.Custom
-end)
-
--- Rainbow tweens
+-- Rainbow functions
 local function rainbowTweenText(obj)
 	task.spawn(function()
 		while obj and obj.Parent do
@@ -130,12 +122,7 @@ frame.Position = UDim2.new(0.5, -210, 0.5, -110)
 frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BorderSizePixel = 0
 
--- FRAME CORNER
-local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0, 5)
-frameCorner.Parent = frame
-
--- LABEL
+-- FRAME LABEL
 local label = Instance.new("TextLabel")
 label.Parent = frame
 label.Size = UDim2.new(1, -20, 0, 120)
@@ -146,6 +133,9 @@ label.TextWrapped = true
 label.TextScaled = true
 label.Font = Enum.Font.GothamBold
 label.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- ✔ RAINBOW ADDED HERE
+rainbowTweenLabel(label)
 
 -- EXECUTE BUTTON
 local executeButton = Instance.new("TextButton")
@@ -182,30 +172,6 @@ button.BorderSizePixel = 0
 local c = Instance.new("UICorner")
 c.CornerRadius = UDim.new(0, 11)
 c.Parent = button
-
--- VERSION LABEL (bottom left MAIN)
-local versionLabel = Instance.new("TextLabel")
-versionLabel.Parent = screenGui
-versionLabel.Size = UDim2.new(0, 200, 0, 30)
-versionLabel.Position = UDim2.new(0, 10, 1, -40)
-versionLabel.BackgroundTransparency = 1
-versionLabel.Text = "Version: 1.56 BETA"
-versionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-versionLabel.TextXAlignment = Enum.TextXAlignment.Left
-versionLabel.Font = Enum.Font.GothamBold
-versionLabel.TextSize = 18
-
--- ✔ EXTRA BOTTOM LEFT TEXTLABEL (REQUESTED)
-local bottomVersion = Instance.new("TextLabel")
-bottomVersion.Parent = screenGui
-bottomVersion.Size = UDim2.new(0, 200, 0, 25)
-bottomVersion.Position = UDim2.new(0, 10, 1, -30)
-bottomVersion.BackgroundTransparency = 1
-bottomVersion.Text = "Version: 1.56 BETA"
-bottomVersion.TextColor3 = Color3.fromRGB(200, 200, 200)
-bottomVersion.TextXAlignment = Enum.TextXAlignment.Left
-bottomVersion.Font = Enum.Font.GothamBold
-bottomVersion.TextSize = 16
 
 -- NOTIFICATION
 game.StarterGui:SetCore("SendNotification", {
