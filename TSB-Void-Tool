@@ -1,11 +1,44 @@
--- LOAD ONLY ONCE
-if getgenv().EZVoidTeleporterLoaded then return end
-getgenv().EZVoidTeleporterLoaded = true
-
+-- SERVICES
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local SoundService = game:GetService("SoundService")
+local Debris = game:GetService("Debris")
 
+---------------------------------------------------
+-- 🔒 PLACE ID CHECK (FIXED NOTIFICATION STYLE)
+---------------------------------------------------
+if game.PlaceId ~= 10449761463 then
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = "NOT Supported",
+			Text = "This Game is Not Supported",
+			Duration = 4
+		})
+	end)
+	return
+end
+
+---------------------------------------------------
+-- 🔒 LOAD GUARD
+---------------------------------------------------
+if getgenv().EZVoidTeleporterLoaded then
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = "EZ VOID HIDER",
+			Text = "You already load, Don't Execute again!",
+			Duration = 4
+		})
+	end)
+	return
+end
+
+getgenv().EZVoidTeleporterLoaded = true
+
+---------------------------------------------------
+-- PLAYER
+---------------------------------------------------
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 
@@ -17,7 +50,7 @@ local platform = nil
 local savedCF = nil
 
 ---------------------------------------------------
--- 🌈 SMOOTH RAINBOW CYCLER (HSV)
+-- 🌈 RAINBOW CYCLER
 ---------------------------------------------------
 local function rainbowCycle(obj, mode)
 	task.spawn(function()
@@ -39,29 +72,6 @@ local function rainbowCycle(obj, mode)
 end
 
 ---------------------------------------------------
--- 🔥 SQUISH ANIMATION (NEW)
----------------------------------------------------
-local function squish(button)
-	local originalSize = button.Size
-
-	local shrink = TweenService:Create(
-		button,
-		TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-		{Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset - 10, originalSize.Y.Scale, originalSize.Y.Offset - 5)}
-	)
-
-	local expand = TweenService:Create(
-		button,
-		TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
-		{Size = originalSize}
-	)
-
-	shrink:Play()
-	shrink.Completed:Wait()
-	expand:Play()
-end
-
----------------------------------------------------
 -- GUI
 ---------------------------------------------------
 local gui = Instance.new("ScreenGui")
@@ -77,15 +87,15 @@ frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
 frame.BorderSizePixel = 0
 Instance.new("UICorner", frame)
 
--- TEXT LABEL (moved up)
+-- TEXT LABEL
 local label = Instance.new("TextLabel", frame)
-label.Size = UDim2.new(1, -40, 1, -80)
-label.Position = UDim2.new(0, 20, 0, 10)
+label.Size = UDim2.new(1,-40,1,-80)
+label.Position = UDim2.new(0,20,0,10)
 label.BackgroundTransparency = 1
 label.TextWrapped = true
 label.Text = "Thanks for Executing, We appreciate you for Using This BUT I hope you have a good day for Playing!!! :3"
 label.Font = Enum.Font.GothamBold
-label.TextSize = 28
+label.TextSize = 32
 label.TextColor3 = Color3.fromRGB(255,255,255)
 
 rainbowCycle(label, "Text")
@@ -104,7 +114,7 @@ Instance.new("UICorner", execute)
 ---------------------------------------------------
 -- VOID BUTTON
 ---------------------------------------------------
-button = Instance.new("TextButton", gui)
+local button = Instance.new("TextButton", gui)
 button.Visible = false
 button.Size = UDim2.new(0,220,0,55)
 button.Position = UDim2.new(0.5,-110,0,0)
@@ -181,20 +191,55 @@ version.Font = Enum.Font.GothamBold
 version.TextSize = 14
 
 ---------------------------------------------------
--- EXECUTE
+-- EXECUTE + SOUND + FADE + NOTIFY
 ---------------------------------------------------
 execute.MouseButton1Click:Connect(function()
+
+	local sound = Instance.new("Sound")
+	sound.SoundId = "rbxassetid://139421450430380"
+	sound.Volume = 1
+	sound.Parent = SoundService
+	sound:Play()
+	Debris:AddItem(sound, 5)
+
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = "EZ VOID HIDER",
+			Text = "MADE BY SHORTGAMETESLA",
+			Duration = 4
+		})
+	end)
+
+	local tweenInfo = TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+	for _, obj in ipairs(frame:GetDescendants()) do
+		if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+			TweenService:Create(obj, tweenInfo, {
+				TextTransparency = 1
+			}):Play()
+		end
+
+		if obj:IsA("Frame") then
+			TweenService:Create(obj, tweenInfo, {
+				BackgroundTransparency = 1
+			}):Play()
+		end
+	end
+
+	TweenService:Create(frame, tweenInfo, {
+		BackgroundTransparency = 1
+	}):Play()
+
+	task.wait(0.85)
+
 	frame.Visible = false
 	button.Visible = true
 end)
 
 ---------------------------------------------------
--- VOID TOGGLE + SQUISH ANIMATION
+-- VOID TOGGLE
 ---------------------------------------------------
 button.MouseButton1Click:Connect(function()
-
-	-- 🔥 squish effect every click
-	squish(button)
 
 	if not toggled then
 		savedCF = character.HumanoidRootPart.CFrame
