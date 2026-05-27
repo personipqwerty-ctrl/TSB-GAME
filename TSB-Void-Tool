@@ -1,228 +1,153 @@
 -- LOAD ONLY ONCE
-if getgenv().EZVoidTeleporterLoaded then
-	game.StarterGui:SetCore("SendNotification", {
-		Title = "EZ VOID HIDER",
-		Text = "Sir, This script is loaded :/",
-		Duration = 4
-	})
-	return
-end
-
+if getgenv().EZVoidTeleporterLoaded then return end
 getgenv().EZVoidTeleporterLoaded = true
 
--- GAME CHECK
-local supportedPlaceId = 10449761463
-
-if game.PlaceId ~= supportedPlaceId then
-	game.StarterGui:SetCore("SendNotification", {
-		Title = "NOT SUPPORTED",
-		Text = "Hello, This Game is Not Supported",
-		Duration = 6
-	})
-	return
-end
-
--- Services
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
--- Configuration
-local teleportPosition = Vector3.new(240.31468200683594, -491.9150390625, -183.96755981445312)
-local platformSize = Vector3.new(1000, 1, 1000)
-
--- Variables
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local camera = workspace.CurrentCamera
 
-local savedPosition = nil
+local teleportPosition = Vector3.new(240,-492,-184)
+local platformSize = Vector3.new(1000,1,1000)
+
 local toggled = false
 local platform = nil
+local savedCF = nil
 
--- Colors
-local rainbowColors = {
-	Color3.fromRGB(255, 0, 0),
-	Color3.fromRGB(255, 127, 0),
-	Color3.fromRGB(255, 255, 0),
-	Color3.fromRGB(0, 255, 0),
-	Color3.fromRGB(0, 255, 255),
-	Color3.fromRGB(0, 0, 255),
-	Color3.fromRGB(139, 0, 255)
-}
-
-local backgroundColors = {
-	Color3.fromRGB(0, 0, 0),
-	Color3.fromRGB(35, 35, 35),
-	Color3.fromRGB(60, 60, 60),
-	Color3.fromRGB(25, 25, 25)
-}
-
--- Character
-player.CharacterAdded:Connect(function(newCharacter)
-	character = newCharacter
-	wait(1)
-	camera.CameraSubject = character:WaitForChild("Humanoid")
-	camera.CameraType = Enum.CameraType.Custom
-end)
-
--- Rainbow text
-local function rainbowTweenText(obj)
+---------------------------------------------------
+-- 🌈 SMOOTH RAINBOW CYCLER (HSV)
+---------------------------------------------------
+local function rainbowCycle(obj, mode)
 	task.spawn(function()
+		local hue = 0
+
 		while obj and obj.Parent do
-			for _, color in ipairs(rainbowColors) do
-				local tween = TweenService:Create(obj, TweenInfo.new(0.4), {
-					TextColor3 = color
-				})
-				tween:Play()
-				tween.Completed:Wait()
+			hue = (hue + 0.01) % 1
+			local color = Color3.fromHSV(hue, 1, 1)
+
+			if mode == "Text" then
+				obj.TextColor3 = color
+			else
+				obj.Color = color
 			end
+
+			RunService.Heartbeat:Wait()
 		end
 	end)
 end
 
-local function backgroundTween(obj)
-	task.spawn(function()
-		while obj and obj.Parent do
-			for _, color in ipairs(backgroundColors) do
-				local tween = TweenService:Create(obj, TweenInfo.new(0.8), {
-					BackgroundColor3 = color
-				})
-				tween:Play()
-				tween.Completed:Wait()
-			end
-		end
-	end)
+---------------------------------------------------
+-- 🔥 SQUISH ANIMATION (NEW)
+---------------------------------------------------
+local function squish(button)
+	local originalSize = button.Size
+
+	local shrink = TweenService:Create(
+		button,
+		TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset - 10, originalSize.Y.Scale, originalSize.Y.Offset - 5)}
+	)
+
+	local expand = TweenService:Create(
+		button,
+		TweenInfo.new(0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		{Size = originalSize}
+	)
+
+	shrink:Play()
+	shrink.Completed:Wait()
+	expand:Play()
 end
 
--- Platform
-local function createPlatform(position)
-	local part = Instance.new("Part")
-	part.Size = platformSize
-	part.Position = position
-	part.Anchored = true
-	part.Material = Enum.Material.SmoothPlastic
-	part.Transparency = 0.75
-	part.Color = Color3.fromRGB(255, 0, 0)
-	part.Parent = workspace
-	return part
-end
-
-local function resetCamera()
-	if character and character:FindFirstChild("Humanoid") then
-		camera.CameraSubject = character.Humanoid
-		camera.CameraType = Enum.CameraType.Custom
-	end
-end
-
-local function teleportPlayer()
-	if character and character:FindFirstChild("HumanoidRootPart") then
-		character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
-	end
-end
-
+---------------------------------------------------
 -- GUI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "EZVoidHiderGUI"
-screenGui.ResetOnSpawn = false
-screenGui.IgnoreGuiInset = true
-screenGui.Parent = player:WaitForChild("PlayerGui")
+---------------------------------------------------
+local gui = Instance.new("ScreenGui")
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
 
 -- FRAME
-local frame = Instance.new("Frame")
-frame.Parent = screenGui
-frame.Size = UDim2.new(0, 460, 0, 250)
-frame.Position = UDim2.new(0.5, -230, 0.5, -125)
-frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,460,0,250)
+frame.Position = UDim2.new(0.5,-230,0.5,-125)
+frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
 frame.BorderSizePixel = 0
+Instance.new("UICorner", frame)
 
-local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0, 5)
-frameCorner.Parent = frame
-
--- LABEL
-local label = Instance.new("TextLabel")
-label.Parent = frame
-label.Size = UDim2.new(1, -20, 1, -20)
-label.Position = UDim2.new(0, 10, 0, 10)
+-- TEXT LABEL (moved up)
+local label = Instance.new("TextLabel", frame)
+label.Size = UDim2.new(1, -40, 1, -80)
+label.Position = UDim2.new(0, 20, 0, 10)
 label.BackgroundTransparency = 1
-label.Text = "Thanks for Executing, We appreciate you for Using This BUT I hope you have a good day for Playing!!! :3"
 label.TextWrapped = true
-label.TextScaled = false
-label.TextSize = 18
+label.Text = "Thanks for Executing, We appreciate you for Using This BUT I hope you have a good day for Playing!!! :3"
 label.Font = Enum.Font.GothamBold
-label.TextColor3 = Color3.fromRGB(255, 255, 255)
-label.TextXAlignment = Enum.TextXAlignment.Center
-label.TextYAlignment = Enum.TextYAlignment.Center
+label.TextSize = 28
+label.TextColor3 = Color3.fromRGB(255,255,255)
 
-rainbowTweenText(label)
+rainbowCycle(label, "Text")
 
 -- EXECUTE BUTTON
-local executeButton = Instance.new("TextButton")
-executeButton.Parent = frame
-executeButton.Size = UDim2.new(0.7, 0, 0, 45)
-executeButton.Position = UDim2.new(0.15, 0, 1, -60)
-executeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-executeButton.Text = "Execute!"
-executeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-executeButton.TextScaled = true
-executeButton.Font = Enum.Font.GothamBold
-executeButton.BorderSizePixel = 0
+local execute = Instance.new("TextButton", frame)
+execute.Size = UDim2.new(0.7,0,0,45)
+execute.Position = UDim2.new(0.15,0,1,-60)
+execute.BackgroundColor3 = Color3.fromRGB(60,60,60)
+execute.Text = "Execute!"
+execute.TextColor3 = Color3.fromRGB(255,255,255)
+execute.Font = Enum.Font.GothamBold
+execute.TextScaled = true
+Instance.new("UICorner", execute)
 
-local ec = Instance.new("UICorner")
-ec.CornerRadius = UDim.new(0, 12)
-ec.Parent = executeButton
-
-backgroundTween(executeButton)
-
+---------------------------------------------------
 -- VOID BUTTON
-local button = Instance.new("TextButton")
-button.Parent = screenGui
+---------------------------------------------------
+button = Instance.new("TextButton", gui)
 button.Visible = false
-button.Size = UDim2.new(0, 220, 0, 55)
-button.Position = UDim2.new(0.5, -110, 0, 0)
-button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-button.TextColor3 = Color3.fromRGB(255, 0, 0)
+button.Size = UDim2.new(0,220,0,55)
+button.Position = UDim2.new(0.5,-110,0,0)
+button.BackgroundColor3 = Color3.fromRGB(0,0,0)
+button.Text = "Void: OFF"
 button.Font = Enum.Font.GothamBold
 button.TextSize = 22
-button.Text = "Void: OFF"
 button.AutoButtonColor = false
-button.BorderSizePixel = 0
+button.Active = true
+button.Selectable = false
 
-local c = Instance.new("UICorner")
-c.CornerRadius = UDim.new(0, 11)
-c.Parent = button
+Instance.new("UICorner", button)
 
-local stroke = Instance.new("UIStroke")
-stroke.Parent = button
-stroke.Color = Color3.fromRGB(255, 255, 255)
+local stroke = Instance.new("UIStroke", button)
 stroke.Thickness = 3
+stroke.Color = Color3.fromRGB(255,255,255)
 stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-stroke.LineJoinMode = Enum.LineJoinMode.Round
 
-rainbowTweenText(button)
+rainbowCycle(button, "Text")
 
+---------------------------------------------------
 -- DRAG SYSTEM
+---------------------------------------------------
 local dragging = false
 local dragStart
 local startPos
 
 button.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+
 		dragging = true
 		dragStart = input.Position
 		startPos = button.Position
-
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
 	end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+	if not dragging then return end
+
+	if input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch then
+
 		local delta = input.Position - dragStart
 
 		button.Position = UDim2.new(
@@ -234,102 +159,73 @@ UserInputService.InputChanged:Connect(function(input)
 	end
 end)
 
--- VERSION LABEL
-local versionLabel = Instance.new("TextLabel")
-versionLabel.Parent = screenGui
-versionLabel.Size = UDim2.new(0, 200, 0, 25)
-versionLabel.Position = UDim2.new(0, 10, 1, -30)
-versionLabel.BackgroundTransparency = 1
-versionLabel.Text = "Version: 1.56 BETA"
-versionLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-versionLabel.TextXAlignment = Enum.TextXAlignment.Left
-versionLabel.Font = Enum.Font.GothamBold
-versionLabel.TextSize = 16
-versionLabel.ZIndex = 999
-
-game.StarterGui:SetCore("SendNotification", {
-	Title = "EZ VOID HIDER",
-	Text = "MADE BY SHORTGAMETESLA",
-	Duration = 5
-})
-
--- ✅ FIXED EXECUTE ANIMATION (LEFT/RIGHT SLIDE OUT)
-executeButton.MouseButton1Click:Connect(function()
-	local startPos = frame.Position
-
-	local wobbleTime = 0.35
-	local startTime = tick()
-
-	local conn
-	conn = RunService.RenderStepped:Connect(function()
-		local t = tick() - startTime
-
-		-- wobble left/right first
-		local wobble = math.sin(t * 18) * 25
-
-		frame.Position = UDim2.new(
-			startPos.X.Scale,
-			startPos.X.Offset + wobble,
-			startPos.Y.Scale,
-			startPos.Y.Offset
-		)
-
-		if t >= wobbleTime then
-			conn:Disconnect()
-
-			-- slide OUT to right
-			local outTween = TweenService:Create(frame, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-				Position = UDim2.new(1.5, 0, startPos.Y.Scale, startPos.Y.Offset)
-			})
-
-			outTween:Play()
-			outTween.Completed:Wait()
-
-			frame.Visible = false
-			button.Visible = true
-		end
-	end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
 end)
 
--- VOID TOGGLE
+---------------------------------------------------
+-- VERSION LABEL
+---------------------------------------------------
+local version = Instance.new("TextLabel")
+version.Parent = gui
+version.Size = UDim2.new(0, 200, 0, 18)
+version.AnchorPoint = Vector2.new(0, 1)
+version.Position = UDim2.new(0, 6, 1, -6)
+version.BackgroundTransparency = 1
+version.Text = "Version: 1.56 BETA"
+version.TextColor3 = Color3.fromRGB(200, 200, 200)
+version.Font = Enum.Font.GothamBold
+version.TextSize = 14
+
+---------------------------------------------------
+-- EXECUTE
+---------------------------------------------------
+execute.MouseButton1Click:Connect(function()
+	frame.Visible = false
+	button.Visible = true
+end)
+
+---------------------------------------------------
+-- VOID TOGGLE + SQUISH ANIMATION
+---------------------------------------------------
 button.MouseButton1Click:Connect(function()
-	local originalSize = button.Size
 
-	local squish = TweenService:Create(button, TweenInfo.new(0.08), {
-		Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset - 10, originalSize.Y.Scale, originalSize.Y.Offset - 5)
-	})
-
-	local unsquish = TweenService:Create(button, TweenInfo.new(0.12), {
-		Size = originalSize
-	})
-
-	squish:Play()
-	squish.Completed:Wait()
-	unsquish:Play()
-
-	if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+	-- 🔥 squish effect every click
+	squish(button)
 
 	if not toggled then
-		savedPosition = character.HumanoidRootPart.CFrame
-	end
+		savedCF = character.HumanoidRootPart.CFrame
+		toggled = true
 
-	toggled = not toggled
+		platform = Instance.new("Part")
+		platform.Size = platformSize
+		platform.Position = teleportPosition + Vector3.new(0,-3,0)
+		platform.Anchored = true
+		platform.Transparency = 0.75
+		platform.Material = Enum.Material.SmoothPlastic
+		platform.TopSurface = Enum.SurfaceType.Smooth
+		platform.BottomSurface = Enum.SurfaceType.Smooth
+		platform.Parent = workspace
 
-	if toggled then
-		platform = createPlatform(teleportPosition + Vector3.new(0, -3, 0))
-		teleportPlayer()
+		rainbowCycle(platform, "Part")
+
+		character.HumanoidRootPart.CFrame = CFrame.new(teleportPosition)
 		button.Text = "Void: ON"
 	else
+		toggled = false
+
 		if platform then
 			platform:Destroy()
 			platform = nil
 		end
 
-		if savedPosition then
-			character.HumanoidRootPart.CFrame = savedPosition
+		if savedCF then
+			character.HumanoidRootPart.CFrame = savedCF
 		end
 
 		button.Text = "Void: OFF"
-		resetCamera()
 	end
 end)
