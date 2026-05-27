@@ -1,7 +1,7 @@
 -- LOAD ONLY ONCE
 if getgenv().EZVoidTeleporterLoaded then
 	game.StarterGui:SetCore("SendNotification", {
-		Title = "EZ VOID TELEPORTER",
+		Title = "EZ VOID HIDER",
 		Text = "Sir, This script is loaded :/",
 		Duration = 4
 	})
@@ -39,31 +39,6 @@ local savedPosition = nil
 local toggled = false
 local platform = nil
 
--- LOW HEALTH
-local lowHealthTriggered = false
-
-local function setupHealthCheck(char)
-	local humanoid = char:WaitForChild("Humanoid")
-	lowHealthTriggered = false
-
-	humanoid.HealthChanged:Connect(function(health)
-		if health <= 20 and not lowHealthTriggered then
-			lowHealthTriggered = true
-
-			game.StarterGui:SetCore("SendNotification", {
-				Title = "Critical Low Health",
-				Text = "Low Health! Go Void Now!",
-				Duration = 5,
-				Icon = "rbxassetid://1764960415"
-			})
-		end
-
-		if health > 20 then
-			lowHealthTriggered = false
-		end
-	end)
-end
-
 -- Colors
 local rainbowColors = {
 	Color3.fromRGB(255, 0, 0),
@@ -82,19 +57,13 @@ local backgroundColors = {
 	Color3.fromRGB(25, 25, 25)
 }
 
--- Character setup
-local function setupCharacter(char)
-	character = char
+-- Character
+player.CharacterAdded:Connect(function(newCharacter)
+	character = newCharacter
 	wait(1)
-
 	camera.CameraSubject = character:WaitForChild("Humanoid")
 	camera.CameraType = Enum.CameraType.Custom
-
-	setupHealthCheck(character)
-end
-
-player.CharacterAdded:Connect(setupCharacter)
-setupCharacter(character)
+end)
 
 -- Rainbow
 local function rainbowTweenText(obj)
@@ -149,15 +118,16 @@ end
 
 -- GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "EZVoidGUI"
+screenGui.Name = "EZVoidHiderGUI"
 screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 -- FRAME
 local frame = Instance.new("Frame")
 frame.Parent = screenGui
-frame.Size = UDim2.new(0, 420, 0, 220)
-frame.Position = UDim2.new(0.5, -210, 0.5, -110)
+frame.Size = UDim2.new(0, 460, 0, 250)
+frame.Position = UDim2.new(0.5, -230, 0.5, -125)
 frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BorderSizePixel = 0
 
@@ -171,7 +141,7 @@ label.Parent = frame
 label.Size = UDim2.new(1, -20, 0, 120)
 label.Position = UDim2.new(0, 10, 0, 10)
 label.BackgroundTransparency = 1
-label.Text = "Thanks for executing, We appreciate you!"
+label.Text = "Thanks for Executing, We appreciate you for Using This BUT I hope you have a good day for Playing!!! :3"
 label.TextWrapped = true
 label.TextScaled = true
 label.Font = Enum.Font.GothamBold
@@ -215,48 +185,33 @@ local c = Instance.new("UICorner")
 c.CornerRadius = UDim.new(0, 11)
 c.Parent = button
 
--- DRAG (SMOOTH TWEEN)
-local dragging, dragInput, dragStart, startPos
+rainbowTweenText(button)
 
-button.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = button.Position
+-- VERSION LABEL
+local versionLabel = Instance.new("TextLabel")
+versionLabel.Parent = screenGui
+versionLabel.Size = UDim2.new(0, 200, 0, 25)
+versionLabel.Position = UDim2.new(0, 10, 1, -30)
+versionLabel.BackgroundTransparency = 1
+versionLabel.Text = "Version: 1.56 BETA"
+versionLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+versionLabel.TextXAlignment = Enum.TextXAlignment.Left
+versionLabel.Font = Enum.Font.GothamBold
+versionLabel.TextSize = 16
+versionLabel.ZIndex = 999
+versionLabel.Visible = true
 
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
-	end
-end)
+-- NOTIFICATION
+game.StarterGui:SetCore("SendNotification", {
+	Title = "EZ VOID HIDER",
+	Text = "MADE BY SHORTGAMETESLA",
+	Duration = 5
+})
 
-button.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		dragInput = input
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		local delta = input.Position - dragStart
-
-		local goal = UDim2.new(
-			startPos.X.Scale,
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale,
-			startPos.Y.Offset + delta.Y
-		)
-
-		TweenService:Create(button, TweenInfo.new(0.12), {Position = goal}):Play()
-	end
-end)
-
--- EXECUTE CLICK
+-- EXECUTE
 executeButton.MouseButton1Click:Connect(function()
 	TweenService:Create(frame, TweenInfo.new(0.8), {
-		Position = UDim2.new(0.5, -210, -1, 0)
+		Position = UDim2.new(0.5, -230, -1, 0)
 	}):Play()
 
 	wait(0.8)
@@ -265,7 +220,7 @@ executeButton.MouseButton1Click:Connect(function()
 	button.Visible = true
 end)
 
--- VOID BUTTON CLICK (SQUISH ANIMATION)
+-- TOGGLE VOID (squish + drag logic kept)
 button.MouseButton1Click:Connect(function()
 	local originalSize = button.Size
 
