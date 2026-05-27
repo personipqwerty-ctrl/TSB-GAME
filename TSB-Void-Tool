@@ -7,7 +7,7 @@ local SoundService = game:GetService("SoundService")
 local Debris = game:GetService("Debris")
 
 ---------------------------------------------------
--- 🔒 PLACE ID CHECK (FIXED NOTIFICATION STYLE)
+-- PLACE CHECK
 ---------------------------------------------------
 if game.PlaceId ~= 10449761463 then
 	pcall(function()
@@ -21,7 +21,7 @@ if game.PlaceId ~= 10449761463 then
 end
 
 ---------------------------------------------------
--- 🔒 LOAD GUARD
+-- LOAD GUARD
 ---------------------------------------------------
 if getgenv().EZVoidTeleporterLoaded then
 	pcall(function()
@@ -49,8 +49,33 @@ local toggled = false
 local platform = nil
 local savedCF = nil
 
+local humanoid = character:WaitForChild("Humanoid")
+
 ---------------------------------------------------
--- 🌈 RAINBOW CYCLER
+-- LOW HEALTH
+---------------------------------------------------
+local lowHealthNotified = false
+
+humanoid.HealthChanged:Connect(function(hp)
+	local pct = hp / humanoid.MaxHealth
+
+	if pct <= 0.25 and not lowHealthNotified then
+		lowHealthNotified = true
+
+		pcall(function()
+			StarterGui:SetCore("SendNotification", {
+				Title = "Critical Health",
+				Text = "Go Void Now! Low Health!",
+				Duration = 4
+			})
+		end)
+	elseif pct > 0.25 then
+		lowHealthNotified = false
+	end
+end)
+
+---------------------------------------------------
+-- RAINBOW
 ---------------------------------------------------
 local function rainbowCycle(obj, mode)
 	task.spawn(function()
@@ -74,12 +99,10 @@ end
 ---------------------------------------------------
 -- GUI
 ---------------------------------------------------
-local gui = Instance.new("ScreenGui")
-gui.Parent = player:WaitForChild("PlayerGui")
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 
--- FRAME
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0,460,0,250)
 frame.Position = UDim2.new(0.5,-230,0.5,-125)
@@ -87,7 +110,6 @@ frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
 frame.BorderSizePixel = 0
 Instance.new("UICorner", frame)
 
--- TEXT LABEL
 local label = Instance.new("TextLabel", frame)
 label.Size = UDim2.new(1,-40,1,-80)
 label.Position = UDim2.new(0,20,0,10)
@@ -100,7 +122,9 @@ label.TextColor3 = Color3.fromRGB(255,255,255)
 
 rainbowCycle(label, "Text")
 
--- EXECUTE BUTTON
+---------------------------------------------------
+-- EXECUTE
+---------------------------------------------------
 local execute = Instance.new("TextButton", frame)
 execute.Size = UDim2.new(0.7,0,0,45)
 execute.Position = UDim2.new(0.15,0,1,-60)
@@ -122,9 +146,6 @@ button.BackgroundColor3 = Color3.fromRGB(0,0,0)
 button.Text = "Void: OFF"
 button.Font = Enum.Font.GothamBold
 button.TextSize = 22
-button.AutoButtonColor = false
-button.Active = true
-button.Selectable = false
 
 Instance.new("UICorner", button)
 
@@ -136,7 +157,7 @@ stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 rainbowCycle(button, "Text")
 
 ---------------------------------------------------
--- DRAG SYSTEM
+-- DRAG
 ---------------------------------------------------
 local dragging = false
 local dragStart
@@ -155,18 +176,14 @@ end)
 UserInputService.InputChanged:Connect(function(input)
 	if not dragging then return end
 
-	if input.UserInputType == Enum.UserInputType.MouseMovement
-		or input.UserInputType == Enum.UserInputType.Touch then
+	local delta = input.Position - dragStart
 
-		local delta = input.Position - dragStart
-
-		button.Position = UDim2.new(
-			startPos.X.Scale,
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale,
-			startPos.Y.Offset + delta.Y
-		)
-	end
+	button.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
 end)
 
 UserInputService.InputEnded:Connect(function(input)
@@ -177,21 +194,20 @@ UserInputService.InputEnded:Connect(function(input)
 end)
 
 ---------------------------------------------------
--- VERSION LABEL
+-- VERSION
 ---------------------------------------------------
-local version = Instance.new("TextLabel")
-version.Parent = gui
-version.Size = UDim2.new(0, 200, 0, 18)
-version.AnchorPoint = Vector2.new(0, 1)
-version.Position = UDim2.new(0, 6, 1, -6)
+local version = Instance.new("TextLabel", gui)
+version.Size = UDim2.new(0,200,0,18)
+version.AnchorPoint = Vector2.new(0,1)
+version.Position = UDim2.new(0,6,1,-6)
 version.BackgroundTransparency = 1
 version.Text = "Version: 1.56 BETA"
-version.TextColor3 = Color3.fromRGB(200, 200, 200)
+version.TextColor3 = Color3.fromRGB(200,200,200)
 version.Font = Enum.Font.GothamBold
 version.TextSize = 14
 
 ---------------------------------------------------
--- EXECUTE + SOUND + FADE + NOTIFY
+-- EXECUTE
 ---------------------------------------------------
 execute.MouseButton1Click:Connect(function()
 
@@ -204,40 +220,18 @@ execute.MouseButton1Click:Connect(function()
 
 	pcall(function()
 		StarterGui:SetCore("SendNotification", {
-			Title = "EZ VOID HIDER",
+			Title = "EZ VOID HELPER",
 			Text = "MADE BY SHORTGAMETESLA",
 			Duration = 4
 		})
 	end)
-
-	local tweenInfo = TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-
-	for _, obj in ipairs(frame:GetDescendants()) do
-		if obj:IsA("TextLabel") or obj:IsA("TextButton") then
-			TweenService:Create(obj, tweenInfo, {
-				TextTransparency = 1
-			}):Play()
-		end
-
-		if obj:IsA("Frame") then
-			TweenService:Create(obj, tweenInfo, {
-				BackgroundTransparency = 1
-			}):Play()
-		end
-	end
-
-	TweenService:Create(frame, tweenInfo, {
-		BackgroundTransparency = 1
-	}):Play()
-
-	task.wait(0.85)
 
 	frame.Visible = false
 	button.Visible = true
 end)
 
 ---------------------------------------------------
--- VOID TOGGLE
+-- VOID SYSTEM (SMOOTH PLATFORM FIX)
 ---------------------------------------------------
 button.MouseButton1Click:Connect(function()
 
@@ -250,9 +244,17 @@ button.MouseButton1Click:Connect(function()
 		platform.Position = teleportPosition + Vector3.new(0,-3,0)
 		platform.Anchored = true
 		platform.Transparency = 0.75
+
+		-- 🌊 SMOOTH PLATFORM FIX
 		platform.Material = Enum.Material.SmoothPlastic
 		platform.TopSurface = Enum.SurfaceType.Smooth
 		platform.BottomSurface = Enum.SurfaceType.Smooth
+		platform.LeftSurface = Enum.SurfaceType.Smooth
+		platform.RightSurface = Enum.SurfaceType.Smooth
+		platform.FrontSurface = Enum.SurfaceType.Smooth
+		platform.BackSurface = Enum.SurfaceType.Smooth
+
+		platform.CastShadow = false
 		platform.Parent = workspace
 
 		rainbowCycle(platform, "Part")
@@ -267,7 +269,7 @@ button.MouseButton1Click:Connect(function()
 			platform = nil
 		end
 
-		if savedCF then
+		if savedCF and character and character:FindFirstChild("HumanoidRootPart") then
 			character.HumanoidRootPart.CFrame = savedCF
 		end
 
