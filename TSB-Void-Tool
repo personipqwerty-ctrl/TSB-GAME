@@ -193,7 +193,6 @@ local c = Instance.new("UICorner")
 c.CornerRadius = UDim.new(0, 11)
 c.Parent = button
 
--- UIStroke border
 local stroke = Instance.new("UIStroke")
 stroke.Parent = button
 stroke.Color = Color3.fromRGB(255, 255, 255)
@@ -203,7 +202,7 @@ stroke.LineJoinMode = Enum.LineJoinMode.Round
 
 rainbowTweenText(button)
 
--- DRAG SYSTEM (fixed smooth)
+-- DRAG SYSTEM
 local dragging = false
 local dragStart
 local startPos
@@ -248,39 +247,44 @@ versionLabel.Font = Enum.Font.GothamBold
 versionLabel.TextSize = 16
 versionLabel.ZIndex = 999
 
--- NOTIFICATION
 game.StarterGui:SetCore("SendNotification", {
 	Title = "EZ VOID HIDER",
 	Text = "MADE BY SHORTGAMETESLA",
 	Duration = 5
 })
 
--- EXECUTE (WOBBLE SLIDE EXIT)
+-- ✅ FIXED EXECUTE ANIMATION (LEFT/RIGHT SLIDE OUT)
 executeButton.MouseButton1Click:Connect(function()
-
 	local startPos = frame.Position
-	local time = 0
-	local duration = 1.6
 
-	local connection
-	connection = RunService.RenderStepped:Connect(function(dt)
-		time += dt
-		local alpha = math.clamp(time / duration, 0, 1)
+	local wobbleTime = 0.35
+	local startTime = tick()
 
-		local endY = -1
-		local y = startPos.Y.Offset + ((endY * 300) - startPos.Y.Offset) * alpha
+	local conn
+	conn = RunService.RenderStepped:Connect(function()
+		local t = tick() - startTime
 
-		local wobble = math.sin(time * 6) * 20
+		-- wobble left/right first
+		local wobble = math.sin(t * 18) * 25
 
 		frame.Position = UDim2.new(
 			startPos.X.Scale,
 			startPos.X.Offset + wobble,
 			startPos.Y.Scale,
-			y
+			startPos.Y.Offset
 		)
 
-		if alpha >= 1 then
-			connection:Disconnect()
+		if t >= wobbleTime then
+			conn:Disconnect()
+
+			-- slide OUT to right
+			local outTween = TweenService:Create(frame, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+				Position = UDim2.new(1.5, 0, startPos.Y.Scale, startPos.Y.Offset)
+			})
+
+			outTween:Play()
+			outTween.Completed:Wait()
+
 			frame.Visible = false
 			button.Visible = true
 		end
