@@ -66,35 +66,11 @@ player.CharacterAdded:Connect(function(newCharacter)
 end)
 
 -- Rainbow tweens
-local function rainbowTweenPart(part)
+local function rainbowTweenText(obj)
 	task.spawn(function()
-		while part and part.Parent do
+		while obj and obj.Parent do
 			for _, color in ipairs(rainbowColors) do
-				local tween = TweenService:Create(part, TweenInfo.new(0.4), {Color = color})
-				tween:Play()
-				tween.Completed:Wait()
-			end
-		end
-	end)
-end
-
-local function rainbowTweenText(button)
-	task.spawn(function()
-		while button and button.Parent do
-			for _, color in ipairs(rainbowColors) do
-				local tween = TweenService:Create(button, TweenInfo.new(0.4), {TextColor3 = color})
-				tween:Play()
-				tween.Completed:Wait()
-			end
-		end
-	end)
-end
-
-local function rainbowTweenLabel(label)
-	task.spawn(function()
-		while label and label.Parent do
-			for _, color in ipairs(rainbowColors) do
-				local tween = TweenService:Create(label, TweenInfo.new(0.4), {TextColor3 = color})
+				local tween = TweenService:Create(obj, TweenInfo.new(0.4), {TextColor3 = color})
 				tween:Play()
 				tween.Completed:Wait()
 			end
@@ -124,8 +100,6 @@ local function createPlatform(position)
 	part.Transparency = 0.75
 	part.Color = Color3.fromRGB(255, 0, 0)
 	part.Parent = workspace
-
-	rainbowTweenPart(part)
 	return part
 end
 
@@ -156,7 +130,7 @@ frame.Position = UDim2.new(0.5, -210, 0.5, -110)
 frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 frame.BorderSizePixel = 0
 
--- ✔ FRAME CORNER (REQUESTED)
+-- FRAME CORNER
 local frameCorner = Instance.new("UICorner")
 frameCorner.CornerRadius = UDim.new(0, 5)
 frameCorner.Parent = frame
@@ -172,8 +146,6 @@ label.TextWrapped = true
 label.TextScaled = true
 label.Font = Enum.Font.GothamBold
 label.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-rainbowTweenLabel(label)
 
 -- EXECUTE BUTTON
 local executeButton = Instance.new("TextButton")
@@ -211,45 +183,7 @@ local c = Instance.new("UICorner")
 c.CornerRadius = UDim.new(0, 11)
 c.Parent = button
 
--- drag
-local dragging, dragInput, dragStart, startPos
-
-button.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = button.Position
-
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
-	end
-end)
-
-button.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-		dragInput = input
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		local delta = input.Position - dragStart
-		button.Position = UDim2.new(
-			startPos.X.Scale,
-			startPos.X.Offset + delta.X,
-			startPos.Y.Scale,
-			startPos.Y.Offset + delta.Y
-		)
-	end
-end)
-
-rainbowTweenText(button)
-backgroundTween(button)
-
--- VERSION LABEL
+-- VERSION LABEL (bottom left MAIN)
 local versionLabel = Instance.new("TextLabel")
 versionLabel.Parent = screenGui
 versionLabel.Size = UDim2.new(0, 200, 0, 30)
@@ -260,6 +194,18 @@ versionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 versionLabel.TextXAlignment = Enum.TextXAlignment.Left
 versionLabel.Font = Enum.Font.GothamBold
 versionLabel.TextSize = 18
+
+-- ✔ EXTRA BOTTOM LEFT TEXTLABEL (REQUESTED)
+local bottomVersion = Instance.new("TextLabel")
+bottomVersion.Parent = screenGui
+bottomVersion.Size = UDim2.new(0, 200, 0, 25)
+bottomVersion.Position = UDim2.new(0, 10, 1, -30)
+bottomVersion.BackgroundTransparency = 1
+bottomVersion.Text = "Version: 1.56 BETA"
+bottomVersion.TextColor3 = Color3.fromRGB(200, 200, 200)
+bottomVersion.TextXAlignment = Enum.TextXAlignment.Left
+bottomVersion.Font = Enum.Font.GothamBold
+bottomVersion.TextSize = 16
 
 -- NOTIFICATION
 game.StarterGui:SetCore("SendNotification", {
